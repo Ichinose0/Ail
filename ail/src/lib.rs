@@ -4,6 +4,15 @@ use widget::Button;
 
 pub mod management;
 pub mod widget;
+pub mod event;
+
+pub type CursorIcon = winit::window::CursorIcon;
+
+#[derive(Clone,Copy,Debug)]
+pub enum ApplicationEvent {
+    Close,
+    SetCursor(CursorIcon)
+}
 
 pub fn run() {
     let mut registry = WidgetRegistry::new();

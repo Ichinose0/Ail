@@ -7,3 +7,5 @@ edition = "2021"
 
 [dependencies]
 aom = { version = "0.1.0", path = "../aom" }
+
+winit = "0.29.7"
