@@ -7,5 +7,5 @@ edition = "2021"
 
 [dependencies]
 aom = { version = "0.1.0", path = "../aom" }
-
+acure = { version = "0.0.1", features = ["d2d1","x11"], git = "https://github.com/Ichinose0/acure/" }
 winit = "0.29.7"

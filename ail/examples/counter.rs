@@ -1,3 +1,7 @@
+use ail::{Window, Application, widget::Widget};
+
 fn main() {
-    ail::run();
+    let window = Window::new();
+    let app = Application::new(window);
+    app.run();
 }
