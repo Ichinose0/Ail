@@ -5,28 +5,18 @@ use aom::ID;
 use crate::{widget::Widget, ApplicationEvent};
 
 #[derive(Clone, Copy, Debug)]
-pub enum EventKind<M>
-where
-    M: Clone + Copy + Debug,
-{
+pub enum EventKind {
     Redraw,
-    User(M),
-    Application(ApplicationEvent<M>),
+    Application(ApplicationEvent),
 }
 
-pub struct EventRequest<M>
-where
-    M: Clone + Copy + Debug,
-{
+pub struct EventRequest {
     id: ID,
-    kind: EventKind<M>,
+    kind: EventKind,
 }
 
-impl<M> EventRequest<M>
-where
-    M: Clone + Copy + Debug,
-{
-    pub fn new(widget: &impl Widget<M>, kind: EventKind<M>) -> Self {
+impl EventRequest {
+    pub fn new(widget: &impl Widget, kind: EventKind) -> Self {
         Self {
             id: widget.id(),
             kind,
@@ -37,7 +27,7 @@ where
         self.id
     }
 
-    pub fn kind(&self) -> EventKind<M> {
+    pub fn kind(&self) -> EventKind {
         self.kind
     }
 }

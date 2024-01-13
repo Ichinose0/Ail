@@ -216,13 +216,16 @@ impl Default for Theme {
 }
 
 #[derive(Clone, Copy, Debug)]
-pub enum ApplicationEvent<M>
-where
-    M: Clone + Copy + Debug,
-{
+pub enum WidgetEvent {
+    OnHover,
+    OnClick,
+}
+
+#[derive(Clone, Copy, Debug)]
+pub enum ApplicationEvent {
     Close,
     RedrawRequested,
-    Message(M),
+    OnEvent(WidgetEvent, ID),
 }
 
 pub struct Window {
@@ -243,21 +246,19 @@ impl Window {
     }
 }
 
-pub struct Application<W, M>
+pub struct Application<W>
 where
-    W: Widget<M> + 'static,
-    M: Clone + Copy + Debug,
+    W: Widget + 'static,
 {
     window: Window,
     widget: W,
     theme: Theme,
-    render_manager: RenderManager<M>,
+    render_manager: RenderManager,
 }
 
-impl<W, M> Application<W, M>
+impl<W> Application<W>
 where
-    W: Widget<M> + 'static,
-    M: Clone + Copy + Debug,
+    W: Widget + 'static,
 {
     pub fn new(window: Window, widget: W) -> Self {
         let render_manager = RenderManager::new(&window.inner);
@@ -271,13 +272,13 @@ where
 
     pub fn run<F>(mut self, mut callback: F)
     where
-        F: FnMut(ApplicationEvent<M>,&mut WidgetRegistry<M>),
+        F: FnMut(ApplicationEvent, &mut WidgetRegistry),
     {
         let id = self.widget.id();
         self.widget.theme(self.theme);
         self.render_manager.register(self.widget);
         let mut ids = vec![id];
-        
+
         self.window
             .event_loop
             .unwrap()
@@ -315,10 +316,8 @@ where
                                 let height = (area.bottom - area.top) as i32;
                                 if x >= cx && x <= cx + width {
                                     if y >= cy && y <= cy + height {
-                                        match widget.on_hover() {
-                                            Some(m) => {events.push((*i,m))},
-                                            None => {}
-                                        }
+                                        widget.on_hover();
+                                        events.push((*i, WidgetEvent::OnHover))
                                         // self.window.inner.set_cursor_icon(comp.cursor());
                                         // request_redraw = true;
                                         // if get_key_state(VK_LBUTTON) {
@@ -337,15 +336,15 @@ where
 
                         let mut registry = self.render_manager.registry.lock().unwrap();
 
-                        for (id,mes) in events {
-                            callback(ApplicationEvent::Message(mes),&mut registry);
+                        for (id, mes) in events {
+                            callback(ApplicationEvent::OnEvent(mes, id), &mut registry);
                         }
                     }
 
                     _ => {}
                 },
                 winit::event::Event::Resumed => {}
-            
+
                 winit::event::Event::MemoryWarning => {}
 
                 _ => {}
