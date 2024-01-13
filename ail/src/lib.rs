@@ -51,8 +51,7 @@ impl Application {
         let button = Button::new("sample");
         let button_id = button.id();
         self.render_manager.register(button);
-
-        self.window.event_loop.unwrap().run(|e,_| {
+        self.window.event_loop.unwrap().run(|e,elwt| {
             match e {
                 winit::event::Event::NewEvents(e) => {}
                 winit::event::Event::WindowEvent { window_id, event } => {
@@ -60,6 +59,14 @@ impl Application {
                         winit::event::WindowEvent::RedrawRequested => {
                             self.render_manager.render(&[button_id]);
                         },
+
+                        winit::event::WindowEvent::Resized(size) => {
+                            self.render_manager.resize(size.width,size.height);
+                        }
+
+                        winit::event::WindowEvent::CloseRequested => {
+                            elwt.exit();
+                        }
 
                         _ => {}
                     }

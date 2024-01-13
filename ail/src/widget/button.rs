@@ -5,14 +5,20 @@ use super::{Widget, Drawable};
 
 #[derive(Debug)]
 pub struct Button {
-    id: ID
+    id: ID,
+    text: String
 }
 
 impl Button {
     pub fn new(id: &'static str) -> Self {
         Self {
-            id: ID::from(id)
+            id: ID::from(id),
+            text: String::from("Button")
         }
+    }
+
+    pub fn set_text(&mut self,text: String) {
+        self.text = text;
     }
 }
 
@@ -45,7 +51,7 @@ impl Drawable for Button {
                 240,
                 40,
                 Color::ARGB(255,0,0,0),
-                String::from("Button"),
+                self.text.clone(),
             ),
         ]
     }

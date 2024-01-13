@@ -40,6 +40,10 @@ impl Renderer {
         }
     }
 
+    pub fn resize(&mut self,width: u32,height: u32) {
+        self.inner.surface_resize(width, height);
+    }
+
     pub fn begin(&mut self) {
         self.inner.begin();
     }

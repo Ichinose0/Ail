@@ -6,7 +6,7 @@ use winit::window::Window;
 use crate::{widget::Widget, render::Renderer};
 
 pub struct RenderManager {
-    registry: WidgetRegistry,
+    pub(crate) registry: WidgetRegistry,
     renderer: Renderer
 }
 
@@ -18,6 +18,10 @@ impl RenderManager {
             registry,
             renderer
         }
+    }
+
+    pub fn resize(&mut self,width: u32,height: u32) {
+        self.renderer.resize(width,height);
     }
 
     pub fn register<W>(&mut self,widget: W)
@@ -48,6 +52,20 @@ impl WidgetRegistry {
         }
     }
 
+    pub fn get<T>(&self,id: ID) -> Option<&Box<T>> {
+        match self.map.get(&id) {
+            Some(s) => return Some(unsafe { std::mem::transmute(s)} ),
+            None => return None,
+        }
+    }
+
+    pub fn get_mut<T>(&mut self,id: ID) -> Option<&mut Box<T>> {
+        match self.map.get_mut(&id) {
+            Some(s) => return Some(unsafe { std::mem::transmute(s)} ),
+            None => return None,
+        }
+    }
+
     pub(crate) fn register<W>(&mut self,widget: W) 
     where
         W: Widget + 'static
@@ -56,11 +74,11 @@ impl WidgetRegistry {
         self.map.insert(id, Box::new(widget));
     }
 
-    pub fn search(&self,id: ID) -> &Box<dyn Widget> {
+    pub(crate) fn search(&self,id: ID) -> &Box<dyn Widget> {
         &self.map[&id]
     }
 
-    pub fn search_mut(&mut self,id: ID) -> &mut Box<dyn Widget> {
+    pub(crate) fn search_mut(&mut self,id: ID) -> &mut Box<dyn Widget> {
         self.map.get_mut(&id).unwrap()
     }
 }
