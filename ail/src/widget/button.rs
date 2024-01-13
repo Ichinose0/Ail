@@ -1,32 +1,51 @@
+use std::fmt::Debug;
+
 use acure::{Command, Color};
 use aom::{ID,Object};
 
-use super::{Widget, Drawable};
+use super::{Widget, Drawable, EventListener};
 
 #[derive(Debug)]
-pub struct Button {
+pub struct Button<M> 
+where
+    M: Clone + Copy + Debug
+{
     id: ID,
-    text: String
+    text: String,
+    on_click: Option<M>
 }
 
-impl Button {
+impl<M> Button<M> 
+where
+    M: Clone + Copy + Debug
+{
     pub fn new(id: &'static str) -> Self {
         Self {
             id: ID::from(id),
-            text: String::from("Button")
+            text: String::from("Button"),
+            on_click: None
         }
     }
 
-    pub fn set_text(&mut self,text: String) {
-        self.text = text;
+    pub fn set_text<T>(&mut self,text: T) 
+    where
+        T: Into<String>
+    {
+        self.text = text.into();
     }
 }
 
-impl Widget for Button {
+impl<M> Widget<M> for Button<M>
+where
+    M: Clone + Copy + Debug
+{
     
 }
 
-impl Drawable for Button {
+impl<M> Drawable for Button<M> 
+where
+    M: Clone + Copy + Debug
+{
     fn render(&mut self) -> Vec<acure::Command> {
         vec![
             Command::FillRectangle(
@@ -57,7 +76,19 @@ impl Drawable for Button {
     }
 }
 
-impl Object for Button {
+impl<M> EventListener<M> for Button<M> 
+where
+    M: Clone + Copy + Debug
+{
+    fn on_click(&mut self) -> Option<M> { None }
+    fn on_hover(&mut self) -> Option<M> { None }
+    fn on_update(&mut self) -> Option<M> { None }
+}
+
+impl<M> Object for Button<M> 
+where
+    M: Clone + Copy + Debug
+{
     fn id(&self) -> ID {
         self.id
     }

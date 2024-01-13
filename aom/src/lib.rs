@@ -9,6 +9,12 @@ impl From<&'static str> for ID {
     }
 }
 
+impl Into<String> for ID {
+    fn into(self) -> String {
+        self.0.to_owned()
+    }
+}
+
 pub trait Object {
     fn id(&self) -> ID;
 }

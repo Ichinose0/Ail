@@ -1,3 +1,5 @@
+use std::fmt::Debug;
+
 use aom::{ID, Object};
 use management::{WidgetRegistry, RenderManager};
 use widget::{Button, Widget};
@@ -11,9 +13,13 @@ pub mod render;
 pub type CursorIcon = winit::window::CursorIcon;
 
 #[derive(Clone,Copy,Debug)]
-pub enum ApplicationEvent {
+pub enum ApplicationEvent<M> 
+where
+    M: Clone + Copy + Debug
+{
     Close,
-    SetCursor(CursorIcon)
+    RedrawRequested,
+    Message(M)
 }
 
 pub struct Window {
@@ -32,32 +38,43 @@ impl Window {
     }
 }
 
-pub struct Application {
+pub struct Application<W,M> 
+where
+    W: Widget<M> + 'static,
+    M: Clone + Copy + Debug
+{
     window: Window,
-    render_manager: RenderManager
+    widget: W,
+    render_manager: RenderManager<M>
 }
 
-impl Application {
-    pub fn new(window: Window) -> Self {
+impl<W,M> Application<W,M> 
+where
+    W: Widget<M> + 'static,
+    M: Clone + Copy + Debug
+{
+    pub fn new(window: Window,widget: W) -> Self {
         let render_manager = RenderManager::new(&window.inner);
         Self {
             window,
+            widget,
             render_manager
         }
     }
 
-    pub fn run(mut self)
+    pub fn run<F>(mut self,callback: F)
+    where
+        F: FnMut(ApplicationEvent<M>)
     {
-        let button = Button::new("sample");
-        let button_id = button.id();
-        self.render_manager.register(button);
+        let id = self.widget.id();
+        self.render_manager.register(self.widget);
         self.window.event_loop.unwrap().run(|e,elwt| {
             match e {
                 winit::event::Event::NewEvents(e) => {}
                 winit::event::Event::WindowEvent { window_id, event } => {
                     match event {
                         winit::event::WindowEvent::RedrawRequested => {
-                            self.render_manager.render(&[button_id]);
+                            self.render_manager.render(&[id]);
                         },
 
                         winit::event::WindowEvent::Resized(size) => {
@@ -78,16 +95,6 @@ impl Application {
             }
         }).unwrap();
     }
-}
-
-pub fn run() {
-    let mut registry = WidgetRegistry::new();
-    let button = Button::new("button");
-    let origin_id = button.id();
-    registry.register(button);
-    let widget = registry.search(ID::from("button"));
-    let id = widget.id();
-    assert_eq!(origin_id,id);
 }
 
 

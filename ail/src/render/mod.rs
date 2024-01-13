@@ -52,9 +52,10 @@ impl Renderer {
         self.inner.end();
     }
 
-    pub fn render<W>(&mut self,mut widget: &mut Box<W>)
+    pub fn render<W,M>(&mut self,mut widget: &mut Box<W>)
     where
-        W: Widget + ?Sized
+        M: Clone + Copy + std::fmt::Debug,
+        W: Widget<M> + ?Sized
     {
         for i in &widget.render() {
             self.inner.command(i, AlignMode::CenterAligned, LayoutMode::AdjustSize)

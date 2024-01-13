@@ -1,16 +1,22 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, fmt::Debug};
 
 use aom::ID;
 use winit::window::Window;
 
 use crate::{widget::Widget, render::Renderer};
 
-pub struct RenderManager {
-    pub(crate) registry: WidgetRegistry,
+pub struct RenderManager<M> 
+where
+    M: Clone + Copy + Debug
+{
+    pub(crate) registry: WidgetRegistry<M>,
     renderer: Renderer
 }
 
-impl RenderManager {
+impl<M> RenderManager<M> 
+where
+    M: Clone + Copy + Debug
+{
     pub fn new(window: &Window) -> Self {
         let registry = WidgetRegistry::new();
         let renderer = Renderer::new(window);
@@ -26,7 +32,7 @@ impl RenderManager {
 
     pub fn register<W>(&mut self,widget: W)
     where
-        W: Widget + 'static
+        W: Widget<M> + 'static
     {
         self.registry.register(widget);
     }
@@ -41,11 +47,17 @@ impl RenderManager {
     }
 }
 
-pub struct WidgetRegistry {
-    map: HashMap<ID,Box<dyn Widget>>
+pub struct WidgetRegistry<M> 
+where
+    M: Clone + Copy + Debug
+{
+    map: HashMap<ID,Box<dyn Widget<M>>>
 }
 
-impl WidgetRegistry {
+impl<M> WidgetRegistry<M> 
+where
+    M: Clone + Copy + Debug
+{
     pub fn new() -> Self {
         Self {
             map: HashMap::new()
@@ -68,17 +80,17 @@ impl WidgetRegistry {
 
     pub(crate) fn register<W>(&mut self,widget: W) 
     where
-        W: Widget + 'static
+        W: Widget<M> + 'static
     {
         let id = widget.id();
         self.map.insert(id, Box::new(widget));
     }
 
-    pub(crate) fn search(&self,id: ID) -> &Box<dyn Widget> {
+    pub(crate) fn search(&self,id: ID) -> &Box<dyn Widget<M>> {
         &self.map[&id]
     }
 
-    pub(crate) fn search_mut(&mut self,id: ID) -> &mut Box<dyn Widget> {
+    pub(crate) fn search_mut(&mut self,id: ID) -> &mut Box<dyn Widget<M>> {
         self.map.get_mut(&id).unwrap()
     }
 }
