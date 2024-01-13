@@ -1,4 +1,4 @@
-use std::fmt::Debug;
+use std::{fmt::Debug, sync::Mutex};
 
 use aom::{Object, ID};
 use management::{RenderManager, WidgetRegistry};
@@ -119,11 +119,12 @@ where
 
     pub fn run<F>(mut self, mut callback: F)
     where
-        F: FnMut(ApplicationEvent<M>),
+        F: FnMut(ApplicationEvent<M>,&mut WidgetRegistry<M>),
     {
         let id = self.widget.id();
         self.render_manager.register(self.widget);
         let mut ids = vec![id];
+        
         self.window
             .event_loop
             .unwrap()
@@ -146,8 +147,12 @@ where
                         device_id,
                         position,
                     } => {
+                        self.window.inner.request_redraw();
+                        let s = Mutex::new(5);
+                        let mut events = vec![];
                         for i in &ids {
-                            let widget = self.render_manager.registry.search_mut(id);
+                            let mut registry = self.render_manager.registry.lock().unwrap();
+                            let widget = registry.search_mut(id);
                             for area in widget.area() {
                                 let x = position.x as i32;
                                 let y = position.y as i32;
@@ -158,7 +163,7 @@ where
                                 if x >= cx && x <= cx + width {
                                     if y >= cy && y <= cy + height {
                                         match widget.on_hover() {
-                                            Some(m) => callback(ApplicationEvent::Message(m)),
+                                            Some(m) => {events.push((*i,m))},
                                             None => {}
                                         }
                                         // self.window.inner.set_cursor_icon(comp.cursor());
@@ -176,11 +181,18 @@ where
                                 }
                             }
                         }
+
+                        let mut registry = self.render_manager.registry.lock().unwrap();
+
+                        for (id,mes) in events {
+                            callback(ApplicationEvent::Message(mes),&mut registry);
+                        }
                     }
 
                     _ => {}
                 },
                 winit::event::Event::Resumed => {}
+            
                 winit::event::Event::MemoryWarning => {}
 
                 _ => {}

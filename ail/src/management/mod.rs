@@ -1,4 +1,4 @@
-use std::{collections::HashMap, fmt::Debug};
+use std::{collections::HashMap, fmt::Debug, sync::Mutex};
 
 use aom::ID;
 use winit::window::Window;
@@ -9,7 +9,7 @@ pub struct RenderManager<M>
 where
     M: Clone + Copy + Debug,
 {
-    pub(crate) registry: WidgetRegistry<M>,
+    pub(crate) registry: Mutex<WidgetRegistry<M>>,
     renderer: Renderer,
 }
 
@@ -18,7 +18,7 @@ where
     M: Clone + Copy + Debug,
 {
     pub fn new(window: &Window) -> Self {
-        let registry = WidgetRegistry::new();
+        let registry = Mutex::new(WidgetRegistry::new());
         let renderer = Renderer::new(window);
         Self { registry, renderer }
     }
@@ -31,13 +31,14 @@ where
     where
         W: Widget<M> + 'static,
     {
-        self.registry.register(widget);
+        self.registry.lock().unwrap().register(widget);
     }
 
     pub fn render(&mut self, id: &[ID]) {
         self.renderer.begin();
+        let mut registry = self.registry.lock().unwrap();
         for i in id {
-            let w = self.registry.search_mut(*i);
+            let w = registry.search_mut(*i);
             self.renderer.render(w);
         }
         self.renderer.end();

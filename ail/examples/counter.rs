@@ -12,13 +12,15 @@ pub enum Message {
 fn main() {
     let window = Window::new();
     let mut button: Button<Message> = Button::new("my_button");
+    let id = button.id();
     button.set_text(button.id());
     button.on_hover(Message::ButtonHovered);
     let app = Application::new(window, button);
-    app.run(|event| {
+    app.run(|event,registry| {
         match event {
             ApplicationEvent::Message(mes) => {
-                println!("{:?}",mes);
+                let button:&mut Box<Button<Message>> = registry.get_mut(id).unwrap();
+                button.set_text("Clicked");
             }
             _ => {}
         }
