@@ -24,7 +24,5 @@ mod tests {
     use super::*;
 
     #[test]
-    fn id() {
-
-    }
+    fn id() {}
 }

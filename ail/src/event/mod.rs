@@ -2,34 +2,34 @@ use std::fmt::Debug;
 
 use aom::ID;
 
-use crate::{ApplicationEvent, widget::Widget};
+use crate::{widget::Widget, ApplicationEvent};
 
-#[derive(Clone,Copy,Debug)]
-pub enum EventKind<M> 
+#[derive(Clone, Copy, Debug)]
+pub enum EventKind<M>
 where
-    M: Clone + Copy + Debug
+    M: Clone + Copy + Debug,
 {
     Redraw,
     User(M),
-    Application(ApplicationEvent<M>)
+    Application(ApplicationEvent<M>),
 }
 
 pub struct EventRequest<M>
 where
-    M: Clone + Copy + Debug
+    M: Clone + Copy + Debug,
 {
     id: ID,
-    kind: EventKind<M>
+    kind: EventKind<M>,
 }
 
-impl<M> EventRequest<M> 
+impl<M> EventRequest<M>
 where
-    M: Clone + Copy + Debug
+    M: Clone + Copy + Debug,
 {
-    pub fn new(widget: &impl Widget<M>,kind: EventKind<M>) -> Self {
+    pub fn new(widget: &impl Widget<M>, kind: EventKind<M>) -> Self {
         Self {
             id: widget.id(),
-            kind
+            kind,
         }
     }
 

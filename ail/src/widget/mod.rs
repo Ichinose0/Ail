@@ -4,16 +4,24 @@ use std::fmt::Debug;
 
 pub use button::*;
 
-use aom::Object;
 use acure::Command;
+use aom::Object;
 
-pub trait EventListener<M> 
+use crate::Rect;
+
+pub trait EventListener<M>
 where
-    M: Clone + Copy + Debug
+    M: Clone + Copy + Debug,
 {
-    fn on_click(&mut self) -> Option<M> { None }
-    fn on_hover(&mut self) -> Option<M> { None }
-    fn on_update(&mut self) -> Option<M> { None }
+    fn on_click(&mut self) -> Option<M> {
+        None
+    }
+    fn on_hover(&mut self) -> Option<M> {
+        None
+    }
+    fn on_update(&mut self) -> Option<M> {
+        None
+    }
 }
 
 pub trait Drawable {
@@ -22,9 +30,12 @@ pub trait Drawable {
     }
 }
 
-pub trait Widget<M>: std::fmt::Debug + Object + Drawable + EventListener<M> 
-where
-    M: Clone + Copy + Debug
-{
+pub trait Layout {
+    fn area(&self) -> Vec<Rect>;
+}
 
+pub trait Widget<M>: std::fmt::Debug + Object + Drawable + Layout + EventListener<M>
+where
+    M: Clone + Copy + Debug,
+{
 }
