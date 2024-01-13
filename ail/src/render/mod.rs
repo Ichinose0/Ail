@@ -1,4 +1,4 @@
-use acure::{surface::Surface, Acure, d2d1::D2D1Surface, Color, Command};
+use acure::{surface::Surface, Acure, d2d1::D2D1Surface, Color, Command, AlignMode, LayoutMode};
 use winit::{window::Window, raw_window_handle::HasWindowHandle};
 
 use crate::widget::Widget;
@@ -40,12 +40,21 @@ impl Renderer {
         }
     }
 
-    pub fn render<W>(&mut self,widgets: &[&Box<W>])
-    where
-        W: Widget
-    {
+    pub fn begin(&mut self) {
         self.inner.begin();
-        self.inner.clear(Color::ARGB(255,0,255,0));
+    }
+
+    pub fn end(&mut self) {
         self.inner.end();
+    }
+
+    pub fn render<W>(&mut self,mut widget: &mut Box<W>)
+    where
+        W: Widget + ?Sized
+    {
+        for i in &widget.render() {
+            self.inner.command(i, AlignMode::CenterAligned, LayoutMode::AdjustSize)
+        }
+        
     }
 }

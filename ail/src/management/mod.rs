@@ -20,11 +20,20 @@ impl RenderManager {
         }
     }
 
-    pub fn render<W>(&mut self,widgets: &[&Box<W>]) 
+    pub fn register<W>(&mut self,widget: W)
     where
-        W: Widget
+        W: Widget + 'static
     {
-        self.renderer.render(widgets);
+        self.registry.register(widget);
+    }
+
+    pub fn render(&mut self,id: &[ID]) {
+        self.renderer.begin();
+        for i in id {
+            let w = self.registry.search_mut(*i);
+            self.renderer.render(w);
+        }
+        self.renderer.end();
     }
 }
 
@@ -39,7 +48,7 @@ impl WidgetRegistry {
         }
     }
 
-    pub fn register<W>(&mut self,widget: W) 
+    pub(crate) fn register<W>(&mut self,widget: W) 
     where
         W: Widget + 'static
     {
@@ -49,5 +58,9 @@ impl WidgetRegistry {
 
     pub fn search(&self,id: ID) -> &Box<dyn Widget> {
         &self.map[&id]
+    }
+
+    pub fn search_mut(&mut self,id: ID) -> &mut Box<dyn Widget> {
+        self.map.get_mut(&id).unwrap()
     }
 }

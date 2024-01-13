@@ -48,8 +48,9 @@ impl Application {
 
     pub fn run(mut self)
     {
-        let button = Box::new(Button::new("sample"));
-        let widgets = &[&button];
+        let button = Button::new("sample");
+        let button_id = button.id();
+        self.render_manager.register(button);
 
         self.window.event_loop.unwrap().run(|e,_| {
             match e {
@@ -57,7 +58,7 @@ impl Application {
                 winit::event::Event::WindowEvent { window_id, event } => {
                     match event {
                         winit::event::WindowEvent::RedrawRequested => {
-                            self.render_manager.render(widgets);
+                            self.render_manager.render(&[button_id]);
                         },
 
                         _ => {}
