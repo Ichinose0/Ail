@@ -7,7 +7,14 @@ pub use button::*;
 use acure::Command;
 use aom::Object;
 
-use crate::Rect;
+use crate::{Rect, Theme};
+
+#[derive(Clone,Copy,Debug)]
+pub enum WidgetState {
+    Hover,
+    Click,
+    Unfocus
+}
 
 pub trait EventListener<M>
 where
@@ -19,12 +26,19 @@ where
     fn on_hover(&mut self) -> Option<M> {
         None
     }
+    fn unfocus(&mut self) {
+        
+    }
     fn on_update(&mut self) -> Option<M> {
         None
     }
 }
 
 pub trait Drawable {
+    fn theme(&mut self,theme: Theme) {
+
+    }
+
     fn render(&mut self) -> Vec<Command> {
         vec![]
     }

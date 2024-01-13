@@ -11,6 +11,8 @@ pub mod render;
 pub mod widget;
 
 pub type CursorIcon = winit::window::CursorIcon;
+pub type WindowTheme = winit::window::Theme;
+pub type WindowLevel = winit::window::WindowLevel;
 
 /// Represents an area on the screen
 ///
@@ -65,6 +67,154 @@ impl Default for Rect {
     }
 }
 
+/// Represents a color
+///
+/// Initialization with ARGB allows you to create your own colors
+#[derive(Clone, Copy, Debug)]
+pub enum Color {
+    Black,
+    White,
+    /// Initialization with ARGB allows you to create your own colors
+    ARGB(u8, u8, u8, u8),
+}
+
+impl Color {
+    pub fn inversion(&self) -> Color {
+        match self {
+            Color::Black => Color::White,
+            Color::White => Color::Black,
+            Color::ARGB(a, r, g, b) => {
+                Color::ARGB(*a, u8::MAX - (*r), u8::MAX - (*g), u8::MAX - (*b))
+            }
+        }
+    }
+}
+
+impl Into<acure::Color> for Color {
+    fn into(self) -> acure::Color {
+        match self {
+            Color::Black => acure::Color::ARGB(255, 0, 0, 0),
+            Color::White => acure::Color::ARGB(255, 255, 255, 255),
+            Color::ARGB(a, r, g, b) => acure::Color::ARGB(a, r, g, b),
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug)]
+pub struct ColorPair {
+    pub color: Color,
+    pub bgr: Color,
+    pub shadow: Color,
+}
+
+impl ColorPair {
+    pub fn new(color: Color, bgr: Color, shadow: Color) -> Self {
+        Self { color, bgr, shadow }
+    }
+}
+
+#[derive(Clone, Copy, Debug)]
+pub struct Theme {
+    pub hover: ColorPair,
+    pub click: ColorPair,
+    pub normal: ColorPair,
+    window: WindowTheme,
+    pub bgr: Color,
+}
+
+impl Theme {
+    pub const LIGHT: Theme = Theme {
+        hover: ColorPair {
+            color: Color::Black,
+            bgr: Color::White,
+            shadow: Color::ARGB(255, 0, 170, 204),
+        },
+        click: ColorPair {
+            color: Color::Black,
+            bgr: Color::ARGB(255, 200, 200, 200),
+            shadow: Color::ARGB(255, 0, 70, 204),
+        },
+        normal: ColorPair {
+            color: Color::Black,
+            bgr: Color::White,
+            shadow: Color::ARGB(255, 128, 128, 128),
+        },
+        window: WindowTheme::Light,
+        bgr: Color::ARGB(255, 240, 240, 240),
+    };
+    pub const DARK: Theme = Theme {
+        hover: ColorPair {
+            color: Color::White,
+            bgr: Color::ARGB(255, 180, 180, 180),
+            shadow: Color::ARGB(255, 200, 200, 200),
+        },
+        click: ColorPair {
+            color: Color::White,
+            bgr: Color::ARGB(255, 144, 144, 144),
+            shadow: Color::White,
+        },
+        normal: ColorPair {
+            color: Color::ARGB(255, 220, 220, 220),
+            bgr: Color::ARGB(255, 72, 72, 72),
+            shadow: Color::ARGB(255, 200, 200, 200),
+        },
+        window: WindowTheme::Dark,
+        bgr: Color::ARGB(255, 72, 72, 72),
+    };
+
+    pub const LIGHT_HIGH_CONTRAST: Theme = Theme {
+        hover: ColorPair {
+            color: Color::Black,
+            bgr: Color::White,
+            shadow: Color::ARGB(255, 0, 108, 255),
+        },
+        click: ColorPair {
+            color: Color::Black,
+            bgr: Color::White,
+            shadow: Color::ARGB(255, 39, 135, 255),
+        },
+        normal: ColorPair {
+            color: Color::Black,
+            bgr: Color::White,
+            shadow: Color::ARGB(255, 40, 40, 40),
+        },
+        window: WindowTheme::Light,
+        bgr: Color::White,
+    };
+
+    pub const DARK_HIGH_CONTRAST: Theme = Theme {
+        hover: ColorPair {
+            color: Color::White,
+            bgr: Color::Black,
+            shadow: Color::ARGB(255, 255, 159, 59),
+        },
+        click: ColorPair {
+            color: Color::White,
+            bgr: Color::Black,
+            shadow: Color::ARGB(255, 255, 135, 0),
+        },
+        normal: ColorPair {
+            color: Color::White,
+            bgr: Color::Black,
+            shadow: Color::ARGB(255, 0, 255, 224),
+        },
+        window: WindowTheme::Dark,
+        bgr: Color::Black,
+    };
+}
+
+impl Theme {
+    pub fn new() -> Self {
+        Default::default()
+    }
+}
+
+impl Default for Theme {
+    fn default() -> Self {
+        Self::LIGHT
+    }
+}
+
 #[derive(Clone, Copy, Debug)]
 pub enum ApplicationEvent<M>
 where
@@ -100,6 +250,7 @@ where
 {
     window: Window,
     widget: W,
+    theme: Theme,
     render_manager: RenderManager<M>,
 }
 
@@ -113,6 +264,7 @@ where
         Self {
             window,
             widget,
+            theme: Theme::LIGHT,
             render_manager,
         }
     }
@@ -122,6 +274,7 @@ where
         F: FnMut(ApplicationEvent<M>,&mut WidgetRegistry<M>),
     {
         let id = self.widget.id();
+        self.widget.theme(self.theme);
         self.render_manager.register(self.widget);
         let mut ids = vec![id];
         
@@ -174,10 +327,10 @@ where
                                         //     std::thread::sleep(Duration::from_millis(200));
                                         // }
                                     } else {
-                                        //comp.message(widget::WidgetMessage::Unfocus, data);
+                                        widget.unfocus();
                                     }
                                 } else {
-                                    //comp.message(widget::WidgetMessage::Unfocus, data);
+                                    widget.unfocus();
                                 }
                             }
                         }
