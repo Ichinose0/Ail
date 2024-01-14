@@ -74,7 +74,9 @@ impl Drawable for Button {
 }
 
 impl EventListener for Button {
-    fn on_click(&mut self) {}
+    fn on_click(&mut self) {
+        self.state = WidgetState::Click;
+    }
     fn on_hover(&mut self) {
         self.state = WidgetState::Hover;
     }

@@ -43,6 +43,7 @@ impl Renderer {
 
     pub fn begin(&mut self) {
         self.inner.begin();
+        self.inner.clear(Color::ARGB(255,240,240,240));
     }
 
     pub fn end(&mut self) {

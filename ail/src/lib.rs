@@ -1,14 +1,18 @@
-use std::{fmt::Debug, sync::Mutex};
+use std::{fmt::Debug, sync::Mutex, time::Duration};
 
 use aom::{Object, ID};
+use cursor::Cursor;
+use keyboard::{get_key_state, VK_LBUTTON};
 use management::{RenderManager, WidgetRegistry};
 use widget::{Button, Widget};
 use winit::event_loop::EventLoop;
 
 pub mod event;
+pub mod keyboard;
 pub mod management;
 pub mod render;
 pub mod widget;
+pub(crate) mod cursor;
 
 pub type CursorIcon = winit::window::CursorIcon;
 pub type WindowTheme = winit::window::Theme;
@@ -279,75 +283,87 @@ where
         self.render_manager.register(self.widget);
         let mut ids = vec![id];
 
+        let mut cursor_entered = true;
+        let mut clicked = false;
+        let mut click_sended = false;
+
         self.window
             .event_loop
             .unwrap()
-            .run(|e, elwt| match e {
-                winit::event::Event::NewEvents(e) => {}
-                winit::event::Event::WindowEvent { window_id, event } => match event {
-                    winit::event::WindowEvent::RedrawRequested => {
-                        self.render_manager.render(&[id]);
-                    }
-
-                    winit::event::WindowEvent::Resized(size) => {
-                        self.render_manager.resize(size.width, size.height);
-                    }
-
-                    winit::event::WindowEvent::CloseRequested => {
-                        elwt.exit();
-                    }
-
-                    winit::event::WindowEvent::CursorMoved {
-                        device_id,
-                        position,
-                    } => {
-                        self.window.inner.request_redraw();
-                        let s = Mutex::new(5);
-                        let mut events = vec![];
-                        for i in &ids {
-                            let mut registry = self.render_manager.registry.lock().unwrap();
-                            let widget = registry.search_mut(id);
-                            for area in widget.area() {
-                                let x = position.x as i32;
-                                let y = position.y as i32;
-                                let cx = (area.left) as i32;
-                                let cy = (area.top) as i32;
-                                let width = (area.right - area.left) as i32;
-                                let height = (area.bottom - area.top) as i32;
-                                if x >= cx && x <= cx + width {
-                                    if y >= cy && y <= cy + height {
-                                        widget.on_hover();
-                                        events.push((*i, WidgetEvent::OnHover))
-                                        // self.window.inner.set_cursor_icon(comp.cursor());
-                                        // request_redraw = true;
-                                        // if get_key_state(VK_LBUTTON) {
-                                        //     comp.message(widget::WidgetMessage::OnClick, data);
-                                        //     request_redraw = true;
-                                        //     std::thread::sleep(Duration::from_millis(200));
-                                        // }
+            .run(|e, elwt| {
+                if cursor_entered {
+                    let mut events = vec![];
+                    for i in &ids {
+                        let mut registry = self.render_manager.registry.lock().unwrap();
+                        let widget = registry.search_mut(id);
+                        let position = Cursor::get(&self.window.inner);
+                        
+                        for area in widget.area() {
+                            let x = position.x();
+                            let y = position.y();
+                            let cx = (area.left) as i32;
+                            let cy = (area.top) as i32;
+                            let width = (area.right - area.left) as i32;
+                            let height = (area.bottom - area.top) as i32;
+                            if x >= cx && x <= cx + width {
+                                if y >= cy && y <= cy + height {
+                                    clicked = get_key_state(VK_LBUTTON);
+                                    if clicked {
+                                        widget.on_click();
+                                        
+                                        
+                                        if !click_sended {
+                                            events.push((*i, WidgetEvent::OnClick));
+                                            click_sended = true;
+                                        }
+                                        self.window.inner.request_redraw();
                                     } else {
-                                        widget.unfocus();
+                                        widget.on_hover();
+                                        events.push((*i, WidgetEvent::OnHover));
+                                        click_sended = false;
                                     }
                                 } else {
                                     widget.unfocus();
                                 }
+                            } else {
+                                widget.unfocus();
                             }
-                        }
-
-                        let mut registry = self.render_manager.registry.lock().unwrap();
-
-                        for (id, mes) in events {
-                            callback(ApplicationEvent::OnEvent(mes, id), &mut registry);
                         }
                     }
 
+                    let mut registry = self.render_manager.registry.lock().unwrap();
+
+                    for (id, mes) in events {
+                        callback(ApplicationEvent::OnEvent(mes, id), &mut registry);
+                    }
+                }
+                match e {
+                    winit::event::Event::NewEvents(e) => {}
+                    winit::event::Event::WindowEvent { window_id, event } => match event {
+                        winit::event::WindowEvent::RedrawRequested => {
+                            self.render_manager.render(&[id]);
+                        }
+
+                        winit::event::WindowEvent::Resized(size) => {
+                            self.render_manager.resize(size.width, size.height);
+                        }
+
+                        winit::event::WindowEvent::CloseRequested => {
+                            elwt.exit();
+                        }
+
+                        winit::event::WindowEvent::CursorEntered { device_id } => {
+                            cursor_entered = true;
+                        }
+
+                        _ => {}
+                    },
+                    winit::event::Event::Resumed => {}
+
+                    winit::event::Event::MemoryWarning => {}
+
                     _ => {}
-                },
-                winit::event::Event::Resumed => {}
-
-                winit::event::Event::MemoryWarning => {}
-
-                _ => {}
+                }
             })
             .unwrap();
     }

@@ -17,13 +17,13 @@ fn main() {
     let app = Application::new(window, button);
     app.run(|event, registry| match event {
         ApplicationEvent::OnEvent(mes, id) => match mes {
-            ail::WidgetEvent::OnHover => {
+            ail::WidgetEvent::OnClick => {
                 if id == button_id {
                     let button: &mut Box<Button> = registry.get_mut(id).unwrap();
                     button.set_text("Hovered");
                 }
             }
-            ail::WidgetEvent::OnClick => {}
+            ail::WidgetEvent::OnHover => {}
         },
         _ => {}
     });
